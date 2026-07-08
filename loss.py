@@ -26,7 +26,7 @@ class CLIPLoss(nn.Module):
         self.upsample = nn.Upsample(scale_factor=7)
         self.avg_pool = nn.AvgPool2d(kernel_size=stylegan_size // 32)
 
-    def forward(self, image, source_text, target_text):
+    def forward(self, image, source_text, target_text, device='cuda'):
         """
         Вычисляет потери CLIP между изображением и текстом.
 
@@ -93,7 +93,7 @@ class IDLoss(nn.Module):
         # Возвращаем извлеченные эмбеддинги.
         return x_feats
 
-    def forward(self, y_hat, y):
+    def forward(self, y_hat, y, device='cuda'):
         # Функция для вычисления ID Loss.
         # y_hat: отредактированное изображение.
         # y: исходное изображение.
