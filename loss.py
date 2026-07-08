@@ -41,14 +41,11 @@ class CLIPLoss(nn.Module):
         source_image = self.avg_pool(self.upsample(source_image))
         target_image = self.avg_pool(self.upsample(target_image))
 
-        source_tokens = clip.tokenize(source_text).to(source_image.device)
-        target_tokens = clip.tokenize(target_text).to(source_image.device)
-
         source_image_features = self.model.encode_image(source_image)
         target_image_features = self.model.encode_image(target_image)
 
-        source_text_features = self.model.encode_text(source_tokens)
-        target_text_features = self.model.encode_text(target_tokens)
+        source_text_features = self.model.encode_text(source_text)
+        target_text_features = self.model.encode_text(target_text)
 
         # L2-нормализация эмбеддингов
         source_image_features = source_image_features / source_image_features.norm(dim=-1, keepdim=True)
