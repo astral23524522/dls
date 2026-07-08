@@ -26,7 +26,7 @@ class CLIPLoss(nn.Module):
         self.upsample = nn.Upsample(scale_factor=7)
         self.avg_pool = nn.AvgPool2d(kernel_size=stylegan_size // 32)
 
-    def forward(self, image, source_text, target_text):
+    def forward(self, source_image, target_image, source_text, target_text, device='cuda'):
         """
         Вычисляет потери CLIP между изображением и текстом.
 
@@ -38,29 +38,39 @@ class CLIPLoss(nn.Module):
         Returns:
             Значение потерь CLIP.
         """
-        #image = self.preprocess(to_pil_image(image[0])).to(device)
-        # Меняем размерность изображения для получения нужного разрешения для CLIP
-        image = self.avg_pool(self.upsample(image))
- 
-        
-        source_tokens = clip.tokenize(source_text).to(device)
-        target_tokens = clip.tokenize(target_text).to(device)
-        
-        image_features = self.model.encode_image(image)
+        source_image = self.avg_pool(self.upsample(source_image))
+        target_image = self.avg_pool(self.upsample(target_image))
+
+        source_tokens = clip.tokenize(source_text).to(source_image.device)
+        target_tokens = clip.tokenize(target_text).to(source_image.device)
+
+        source_image_features = self.model.encode_image(source_image)
+        target_image_features = self.model.encode_image(target_image)
+
         source_text_features = self.model.encode_text(source_tokens)
         target_text_features = self.model.encode_text(target_tokens)
+
+        # L2-нормализация эмбеддингов
+        source_image_features = source_image_features / source_image_features.norm(dim=-1, keepdim=True)
+        target_image_features = target_image_features / target_image_features.norm(dim=-1, keepdim=True)
+        source_text_features = source_text_features / source_text_features.norm(dim=-1, keepdim=True)
+        target_text_features = target_text_features / target_text_features.norm(dim=-1, keepdim=True)
+
+        image_direction = target_image_features - source_image_features
+        text_direction = target_text_features - source_text_features
+
+        image_direction = image_direction / image_direction.norm(dim=-1, keepdim=True)
+        text_direction = text_direction / text_direction.norm(dim=-1, keepdim=True)
+
          # Вычислите косинусное расстояние d между эмбеддингами CLIP от картинки и текста и посчитаем loss = 1 - d
-        #image_features /image_features.norm(dim=-1, keepdim=True)
         
         loss = 1 - torch.cosine_similarity(
-        image_features - source_text_features,
-        target_text_features - source_text_features,
-        dim=-1
+            image_direction,
+            text_direction,
+            dim=-1
         ).mean()
+
         return loss
-    
-import torch
-from torch import nn
 
 
 class IDLoss(nn.Module):
@@ -93,7 +103,7 @@ class IDLoss(nn.Module):
         # Возвращаем извлеченные эмбеддинги.
         return x_feats
 
-    def forward(self, y_hat, y):
+    def forward(self, y_hat, y, device='cuda'):
         # Функция для вычисления ID Loss.
         # y_hat: отредактированное изображение.
         # y: исходное изображение.
@@ -102,10 +112,10 @@ class IDLoss(nn.Module):
         initial_embeddings = self.extract_feats(y).detach().to(device)
 
         # Извлекаем признаки лица из отредактированного изображения.
-        red_embeddings = self.extract_feats(y_hat).detach().to(device)
+        hat_embeddings = self.extract_feats(y_hat).detach().to(device)
         
 
         # Считаем наш лосс
-        loss = 1 - torch.nn.functional.cosine_similarity(initial_embeddings, red_embeddings).detach().to(device)
+        loss = 1 - torch.nn.functional.cosine_similarity(initial_embeddings, hat_embeddings).detach().to(device)
 
         return loss
