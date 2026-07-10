@@ -53,9 +53,9 @@ class CLIPLoss(nn.Module):
         #image_features /image_features.norm(dim=-1, keepdim=True)
         
         loss = 1 - torch.cosine_similarity(
-        image_features - source_text_features,
-        target_text_features - source_text_features,
-        dim=-1
+            image_features - source_text_features,
+            target_text_features - source_text_features,
+            dim=-1
         ).mean()
         return loss
     
