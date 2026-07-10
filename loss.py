@@ -97,12 +97,11 @@ class IDLoss(nn.Module):
         # Функция для вычисления ID Loss.
         # y_hat: отредактированное изображение.
         # y: исходное изображение.
-        n_samples = y.shape[0]
         # Извлекаем признаки лица из исходного изображения.
         initial_embeddings = self.extract_feats(y).detach().to(device)
 
         # Извлекаем признаки лица из отредактированного изображения.
-        red_embeddings = self.extract_feats(y_hat).detach().to(device)
+        red_embeddings = self.extract_feats(y_hat).to(device)
         
 
         # Считаем наш лосс
