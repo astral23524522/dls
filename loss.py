@@ -106,6 +106,6 @@ class IDLoss(nn.Module):
         
 
         # Считаем наш лосс
-        loss = 1 - torch.nn.functional.cosine_similarity(initial_embeddings, red_embeddings).detach().to(device)
+        loss = 1 - torch.nn.functional.cosine_similarity(initial_embeddings, red_embeddings).to(device)
 
         return loss
