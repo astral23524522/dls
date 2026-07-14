@@ -97,7 +97,7 @@ class LayerFreezer:
 
     # ACTIVE LAYER SELECTION (W+ OPTIMIZATION)
 
-    def _find_active_modules(self, text_features, k=5, batch_size=2, lr=1e-2, iterations=3, ):
+    def _find_active_modules(self, source_text, target_text, k=5, batch_size=2, lr=1e-2, iterations=3, ):
         """
         Returns top-k most active StyledConv / ToRGB modules.
         """
@@ -110,7 +110,7 @@ class LayerFreezer:
         for _ in range(iterations):
             optimizer.zero_grad()
             generated, _ = self.generator([latent], input_is_latent=True, randomize_noise=False)
-            loss = self.clip_loss(generated, text_features)
+            loss = self.clip_loss(generated, source_text, target_text)
             loss.backward()
             optimizer.step()
 
@@ -167,7 +167,7 @@ class LayerFreezer:
                     param.requires_grad = False
 
     # ADAPTIVE FREEZE
-    def freeze_adaptive(self, text_features, k=5, batch_size=2, lr=1e-2, iterations=3, verbose=True,):
+    def freeze_adaptive(self, source_text, target_text, k=5, batch_size=2, lr=1e-2, iterations=3, verbose=True,):
         """
         Adaptive layer selection.
 
@@ -175,7 +175,7 @@ class LayerFreezer:
         using W+ optimization.
         """
 
-        selected_modules = self._find_active_modules(text_features=text_features, k=k, batch_size=batch_size, lr=lr,
+        selected_modules = self._find_active_modules(source_text=source_text, target_text=target_text, k=k, batch_size=batch_size, lr=lr,
                                                      iterations=iterations)
         module_names = self._module_names(selected_modules)
         self._unfreeze_modules(module_names)
