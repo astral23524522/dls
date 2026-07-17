@@ -71,8 +71,8 @@ class CLIPLoss(nn.Module):
             target_text : target prompt
         """
 
-        image_features_frozen = self.encode_image(generated_image)
-        image_features_styled = self.encode_image(frozen_image)
+        image_features_frozen = self.encode_image(frozen_image)
+        image_features_styled = self.encode_image(generated_image)
 
         text_features_source = self.encode_text(source_text)
         text_features_target = self.encode_text(target_text)
