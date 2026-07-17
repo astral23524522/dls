@@ -9,7 +9,6 @@ class StyleGAN2NADATrainer:
         generator,
         generator_clean,
         clip_loss,
-        id_loss,
         optimizer,
         scheduler,
         device,
@@ -17,7 +16,6 @@ class StyleGAN2NADATrainer:
         target_text,
         num_steps=1000,
         l2_lambda=0.4,
-        id_lambda=0.7,
         latent_dim=512,
         visualize_every=200
     ):
@@ -28,7 +26,6 @@ class StyleGAN2NADATrainer:
             generator: обучаемый StyleGAN генератор
             generator_clean: исходный frozen генератор
             clip_loss: CLIP loss
-            id_loss: identity loss
             optimizer: optimizer
             scheduler: scheduler
             device: cuda/cpu
@@ -40,7 +37,6 @@ class StyleGAN2NADATrainer:
         self.generator_clean = generator_clean
 
         self.clip_loss = clip_loss
-        self.id_loss = id_loss
 
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -53,7 +49,6 @@ class StyleGAN2NADATrainer:
         self.num_steps = num_steps
 
         self.l2_lambda = l2_lambda
-        self.id_lambda = id_lambda
 
         self.latent_dim = latent_dim
 
@@ -63,7 +58,6 @@ class StyleGAN2NADATrainer:
         self.losses = {
             "clip": [],
             "l2": [],
-            "id": [],
             "all": [],
             "step": []
         }
@@ -103,16 +97,13 @@ class StyleGAN2NADATrainer:
         image, image_clean = self.generate_images()
 
         # CLIP loss
-        cur_clip_loss = self.clip_loss(image, self.source_text, self.target_text)
+        cur_clip_loss = self.clip_loss(generated_image=image, frozen_image=image_clean, source_text=self.source_text, target_text=self.target_text)
 
         # L2 similarity loss
         cur_l2_loss = F.mse_loss(image, image_clean)
 
-        # Identity loss
-        cur_id_loss = self.id_loss(image, image_clean)
-
         # общий loss
-        loss = (cur_clip_loss + self.l2_lambda * cur_l2_loss + self.id_lambda * cur_id_loss)
+        loss = (cur_clip_loss + self.l2_lambda * cur_l2_loss)
 
         loss.backward()
         self.optimizer.step()
@@ -122,7 +113,6 @@ class StyleGAN2NADATrainer:
         # сохраняем историю
         self.losses["clip"].append(cur_clip_loss.item())
         self.losses["l2"].append(cur_l2_loss.item())
-        self.losses["id"].append(cur_id_loss.item())
         self.losses["all"].append(loss.item())
         self.losses["step"].append(step)
 
@@ -130,8 +120,7 @@ class StyleGAN2NADATrainer:
         return {
             "loss": loss.item(),
             "clip": cur_clip_loss.item(),
-            "l2": cur_l2_loss.item(),
-            "id": cur_id_loss.item()
+            "l2": cur_l2_loss.item()
         }
 
 
@@ -175,7 +164,7 @@ class StyleGAN2NADATrainer:
             metrics = self.train_step(step)
 
             if step % self.visualize_every == 0:
-                print(f"Step {step} Total loss: {metrics['loss']:.4f} CLIP: {metrics['clip']:.4f} L2: {metrics['l2']:.4f} ID: {metrics['id']:.4f}")
+                print(f"Step {step} Total loss: {metrics['loss']:.4f} CLIP: {metrics['clip']:.4f} L2: {metrics['l2']:.4f}")
 
                 image, image_clean = self.generate_images()
                 self.visualize(image, image_clean)
@@ -194,7 +183,6 @@ class StyleGAN2NADATrainer:
         plt.plot(self.losses["step"], self.losses["all"], label="Total")
         plt.plot(self.losses["step"], self.losses["clip"], label="CLIP")
         plt.plot(self.losses["step"], self.losses["l2"], label="L2")
-        plt.plot(self.losses["step"], self.losses["id"], label="ID")
         plt.xlabel("Step")
         plt.ylabel("Loss")
         plt.legend()
