@@ -109,8 +109,19 @@ class LayerFreezer:
 
         for _ in range(iterations):
             optimizer.zero_grad()
-            generated, frozen_image = self.generator([latent], input_is_latent=True, randomize_noise=False)
-            loss = self.clip_loss(generated, frozen_image, source_text, target_text)
+            generated_image, _ = self.generator(
+                [latent],
+                input_is_latent=True,
+                randomize_noise=False
+            )
+
+            with torch.no_grad():
+                frozen_image, _ = self.generator_frozen(
+                    [latent],
+                    input_is_latent=True,
+                    randomize_noise=False
+                )
+            loss = self.clip_loss(generated_image, frozen_image, source_text, target_text)
             loss.backward()
             optimizer.step()
 
