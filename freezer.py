@@ -109,8 +109,8 @@ class LayerFreezer:
 
         for _ in range(iterations):
             optimizer.zero_grad()
-            generated, _ = self.generator([latent], input_is_latent=True, randomize_noise=False)
-            loss = self.clip_loss(generated, source_text, target_text)
+            generated, frozen_image = self.generator([latent], input_is_latent=True, randomize_noise=False)
+            loss = self.clip_loss(generated, frozen_image, source_text, target_text)
             loss.backward()
             optimizer.step()
 
