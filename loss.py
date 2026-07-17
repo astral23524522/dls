@@ -6,7 +6,7 @@ from torchvision.transforms.functional import to_pil_image
 
 from utils import *
 
-class CLIPDirectionalLoss(nn.Module):
+class CLIPLoss(nn.Module):
     """
     Directional CLIP Loss из статьи StyleGAN-NADA.
     """
