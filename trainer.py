@@ -75,7 +75,7 @@ class StyleGAN2NADATrainer:
         Генерация изображения из случайного latent
         """
 
-        z = torch.randn(1,self.latent_dim,device=self.device)
+        z = torch.randn(4, self.latent_dim, device=self.device)
         w = self.generator.get_latent(z)
 
 

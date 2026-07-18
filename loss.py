@@ -1,12 +1,4 @@
 import torch
-from torch import nn
-import clip
-from PIL import Image
-from torchvision.transforms.functional import to_pil_image
-
-from utils import *
-
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import clip
